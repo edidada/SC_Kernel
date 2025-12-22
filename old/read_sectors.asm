@@ -20,9 +20,9 @@ mov dx, [0x9000 + 512] 		; Also , print the first word from the
 call print_hex 			; 2nd loaded sector : should be 0 xface
 jmp $
 
-%include "print_string.asm" ; Re - use our print_string function
-%include "print_hex.asm" ; Re - use our print_hex function
-%include "disk_load.asm"
+%include "../print/print_string.asm" ; Re - use our print_string function
+%include "../pm/print_hex.asm" ; Re - use our print_hex function
+%include "../disk/disk_load.asm"
 ; Include our new disk_load function
 
 ; Global variables
