@@ -1,4 +1,4 @@
-[ bits 16]
+[bits 16]
 
 ; Switch to protected mode
 switch_to_pm :
@@ -17,7 +17,7 @@ switch_to_pm :
 					; pre - fetched and real - mode decoded instructions , which can
 					; cause problems.
 
-[ bits 32]
+[bits 32]
 
 ; Initialise registers and the stack once in PM.
 init_pm :
