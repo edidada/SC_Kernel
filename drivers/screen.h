@@ -1,17 +1,41 @@
 #ifndef SCREEN_H
 #define SCREEN_H
+
 #include "../kernel/types.h"
+#include "../kernel/low_level.h"
 
 #define VIDEO_ADDRESS 0xb8000
 #define MAX_ROWS 25
 #define MAX_COLS 80
+#define VGA_MAX_CHAR 2000
 
 
 // Attribute byte for our default colour scheme .
-#define WHITE_ON_BLACK 0x0f
+#define WHITE_ON_BLACK	0x0f
+
+#define BLACK		0x0
+#define BLUE		0x1
+#define GREEN		0x2
+#define CYAN		0x3
+#define RED		0x4
+#define PURPLE		0x5
+#define BROWN		0x6
+#define GRAY		0x7
+#define DARK_GRAY	0x8
+#define LIGHT_BLUE	0x9
+#define LIGHT_GREEN	0xa
+#define LIGHT_CYAN	0xb
+#define LIGHT_RED	0xc
+#define LIGHT_PURPLE	0xd
+#define YELLOW		0xe
+#define WHITE		0xf
 
 void	clear_screen(void);
-void	print_char(u8 c);
+void	print_char(u8 c, u8 color);
+void	print_string(u8 *str, u8 color);
+void	scroll_screen(void);
+void	mem_move(u16 *dst, u16 *src, u8 len);
+
 // Screen device I/O ports
 #define REG_SCREEN_CTRL 0x3D4
 #define REG_SCREEN_DATA 0x3D5
