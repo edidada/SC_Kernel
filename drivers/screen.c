@@ -19,6 +19,16 @@ void	clear_screen(void) {
 void	print_char(u8 c, u8 color) {
 	volatile u8 *video = (volatile u8 *)VIDEO_ADDRESS + (c_rows * MAX_COLS + c_cols) * 2;
 
+	if (c == '\n') {
+		c_rows++;
+		c_cols = 0;
+		if (c_rows >= MAX_ROWS) {
+			c_rows--;
+			scroll_screen();
+		}
+		move_cursor((c_rows * MAX_COLS + c_cols));
+		return ;
+	}
 	*video++ = c;
 	*video = color;
 	c_cols++;

@@ -1,5 +1,6 @@
 #include "../drivers/screen.h"
 #include "low_level.h"
+#include "idt.h"
 
 void delay(unsigned int count) {
 	for (volatile unsigned int i = 0; i < count; i++) {
@@ -15,19 +16,22 @@ void main() {
 	// At the address pointed to by video_memory , store the character ’X’
 	// (i.e. display ’X’ in the top - left of the screen ).
 	// *video_memory = 'X';
-	u8 *test = "abcdefghijklmnopqrstuvwxyz123456789";
+	u8 *test = "abcdefghij\nklmnopqrstuvwxyz\n123456789";
 	u8 i = 0;
 
+
 	clear_screen();	
-	print_string("RONIN!!", (BLACK << 4) + DARK_GRAY);
-	print_string("lekher ajmi", (BLACK << 4) + YELLOW);
-	while(1) {
-		delay(4000000);
-		if (test[i] == '\0')
-			i = 0;
-		print_char(test[i], WHITE_ON_BLACK);
-		i++;
-	}
+	idt_init();
+	u8 x = 1 / 0;
+	// print_string("RONIN!!", (BLACK << 4) + DARK_GRAY);
+	// print_string("lekher ajmi", (BLACK << 4) + YELLOW);
+	// while(1) {
+	// 	delay(10000000);
+	// 	if (test[i] == '\0')
+	// 		i = 0;
+	// 	print_char(test[i], WHITE_ON_BLACK);
+	// 	i++;
+	// }
 	//port_byte_out(REG_SCREEN_CTRL, 14);
 	//port_byte_out(REG_SCREEN_DATA, 0x00);
 	//port_byte_out(REG_SCREEN_CTRL, 15);
