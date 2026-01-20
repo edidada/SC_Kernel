@@ -7,10 +7,18 @@ OBJ = ${C_SOURCES:.c=.o}
 # Default build target
 all: os-image
 
+# Build for GRUB (Multiboot)
+grub: myos.iso
+
 # Run kvm/qemu to simulate booting of our code.
 run : all
 	kvm -drive format=raw,file=os-image
 	#qemu-system-x86_64 -drive format=raw,file=os-image
+
+# Run with GRUB
+run-grub: grub
+	kvm -cdrom myos.iso
+	#qemu-system-x86_64 -cdrom myos.iso
 
 # This is the actual disk image that the computer loads ,
 # which is the combination of our compiled bootsector and kernel.
@@ -23,6 +31,17 @@ os-image : boot/boot_sector.bin kernel.bin
 # - the compiled C kernel
 kernel.bin : kernel/kernel_entry.o kernel/isr.o ${OBJ}
 	ld -m elf_i386 -o $@ -Ttext 0x1000 $^ --oformat binary
+
+# Build ELF kernel for GRUB (Multiboot)
+kernel.elf : kernel/multiboot-entry.o kernel/isr.o ${OBJ}
+	ld -m elf_i386 -T linker.ld -o $@ $^
+
+# Create bootable ISO with GRUB
+myos.iso: kernel.elf
+	mkdir -p isodir/boot/grub
+	cp kernel.elf isodir/boot/
+	echo 'menuentry "MyOS" { multiboot /boot/kernel.elf }' > isodir/boot/grub/grub.cfg
+	grub-mkrescue -o $@ isodir
 
 # Generic rule for compiling C code to an object file
 # For simplicity , we C files depend on all header files.
@@ -41,8 +60,9 @@ kernel.bin : kernel/kernel_entry.o kernel/isr.o ${OBJ}
 
 # Clear away all generated files .
 clean :
-	rm -fr *.bin *.dis *.o os-image
+	rm -fr *.bin *.dis *.o *.elf *.iso os-image
 	rm -fr kernel/*.o boot/*.bin drivers/*.o
+	rm -fr isodir
 
 # Disassemble our kernel - might be useful for debugging.
 kernel.dis : kernel.bin

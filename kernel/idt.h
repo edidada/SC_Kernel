@@ -26,7 +26,19 @@ static idt_entry_t idt[IDT_ENTRIES]; // Array if IDT entries, aligned for perfor
 static idtr_t idtr;
 
 void	exception_handler(void);
+
 void	idt_set_descriptor(u8 vector, void* isr, u8 flags);
 void	idt_init(void);
+
+
+
+// idt_set_descriptor() Parameters
+// vector - Interrupt number (0-255) - index into IDT array
+// isr - Function pointer to interrupt handler (e.g., isr_stub_0)
+// flags - IDT gate descriptor attributes byte:
+// Bit 7: Present (1 = valid)
+// Bits 5-6: DPL (privilege level 0-3)
+// Bits 0-4: Gate type (0xE = 32-bit interrupt gate)
+
 
 #endif
