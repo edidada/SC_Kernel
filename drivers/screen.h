@@ -35,6 +35,7 @@ void	print_char(u8 c, u8 color);
 void	print_string(u8 *str, u8 color);
 void	scroll_screen(void);
 void	mem_move(u16 *dst, u16 *src, u8 len);
+void	print_int(u32 num);
 
 // Screen device I/O ports
 #define REG_SCREEN_CTRL 0x3D4

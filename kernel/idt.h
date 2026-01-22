@@ -2,6 +2,7 @@
 #define IDT_H
 
 #include "types.h"
+#include "pic.h"
 
 #define IDT_CPU_EXCEPTIONS 36
 
@@ -20,17 +21,19 @@ typedef struct {
 
 #define IDT_ENTRIES 256
 #define IDT_MAX_DESCRIPTORS 256
+
 __attribute__((aligned(0x10)))
-static idt_entry_t idt[IDT_ENTRIES]; // Array if IDT entries, aligned for performance.
+static idt_entry_t idt[IDT_ENTRIES]; // Array of IDT entries, aligned for performance.
 
 static idtr_t idtr;
 
-void	exception_handler(void);
+void	interrupt_handler(u32 irq_num);
 
 void	idt_set_descriptor(u8 vector, void* isr, u8 flags);
 void	idt_init(void);
 
-
+void	timer_handler(void);
+void	keyboard_handler(void);
 
 // idt_set_descriptor() Parameters
 // vector - Interrupt number (0-255) - index into IDT array

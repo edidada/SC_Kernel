@@ -16,6 +16,35 @@ void	clear_screen(void) {
 	}
 }
 
+void	print_int(u32 num) {
+	char buffer[12];  // -2147483648 max length
+	int i = 0;
+	int is_negative = 0;
+
+	if (num == 0) {
+		print_char('0', WHITE_ON_BLACK);
+		return;
+	}
+
+	if (num < 0) {
+		is_negative = 1;
+		num = -num;
+	}
+
+	while (num > 0) {
+		buffer[i++] = '0' + (num % 10);
+		num /= 10;
+	}
+
+	if (is_negative) {
+		print_char('-', WHITE_ON_BLACK);
+	}
+
+	while (i > 0) {
+		print_char(buffer[--i], WHITE_ON_BLACK);
+	}
+}
+
 void	print_char(u8 c, u8 color) {
 	volatile u8 *video = (volatile u8 *)VIDEO_ADDRESS + (c_rows * MAX_COLS + c_cols) * 2;
 

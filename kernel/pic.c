@@ -30,7 +30,7 @@ void	PIC_remap(int offset1, int offset2) {
 	// Unmask both PICs.
 	outb(PIC1_DATA, 0);
 	outb(PIC2_DATA, 0);
-	print_string("REMAPPED SUCCESS!", (BLACK << 4) + GREEN);
+	// print_string("REMAPPED SUCCESS!", (BLACK << 4) + GREEN);
 }
 
 void	IRQ_set_mask(u8 IRQline) {
@@ -58,7 +58,7 @@ void	IRQ_clear_mask(u8 IRQline) {
         IRQline -= 8;
     }
     value = inb(port) & ~(1 << IRQline);
-    outb(port, value);        
+    outb(port, value);
 }
 
 

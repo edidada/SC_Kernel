@@ -1,7 +1,7 @@
 #include "../drivers/screen.h"
 #include "low_level.h"
 #include "idt.h"
-#include "pic.h"
+
 
 void delay(unsigned int count) {
 	for (volatile unsigned int i = 0; i < count; i++) {
@@ -22,9 +22,9 @@ void main() {
 
 
 	clear_screen();
-	idt_init();
 	PIC_remap(0x20, 0x28);
-	u8 x = 1 / 0;
+	idt_init();
+	// u8 x = 1 / 0;
 	// print_string("RONIN!!", (BLACK << 4) + DARK_GRAY);
 	// print_string("lekher ajmi", (BLACK << 4) + YELLOW);
 	// while(1) {

@@ -1,5 +1,5 @@
 global isr_stub_table
-extern exception_handler
+extern interrupt_handler
 
 ; [ESP+12] SS (if privilege change)
 ; [ESP+8]  ESP (if privilege change)
@@ -12,8 +12,9 @@ extern exception_handler
 ; Macro for exceptions that push error code
 %macro isr_err_stub 1
 isr_stub_%+%1:
-	call exception_handler
-	add esp, 4	; removing error code
+	push %1
+	call interrupt_handler
+	add esp, 8	; removing error code
 	iret 
 %endmacro
 
@@ -21,7 +22,9 @@ isr_stub_%+%1:
 %macro isr_no_err_stub 1
 
 isr_stub_%+%1:
-	call exception_handler
+	push %1
+	call interrupt_handler
+	add esp, 4
 	iret
 %endmacro
 
@@ -61,10 +64,17 @@ isr_no_err_stub 29  ; VMM Communication Exception
 isr_err_stub    30  ; Security Exception (has error code)
 isr_no_err_stub 31  ; Reserved
 
+; IRQ Hnadlers (32 - 47)
+%assign i 32
+%rep 16
+	isr_no_err_stub i
+%assign i i+1
+%endrep
+
 ; "stub table". (This is used to prevent excessive code reuse, and not related to actual function.)
 isr_stub_table:
 %assign i 0
-%rep 32
+%rep 48
 	dd isr_stub_%+i ; dd = define doubleword (4-bytes = 32-bit pointer)
 %assign i i+1
 %endrep
