@@ -113,12 +113,38 @@ void	mem_move(u16 *dst, u16 *src, u8 len) {
 	}	
 }
 
+static void	find_end_c_cols(void) {
+	volatile u8 *video = (volatile u8 *)VIDEO_ADDRESS + (--c_rows * MAX_COLS + 0) * 2;
+	u8	i = 0;
+
+	c_cols = 0;
+	while (*video != '\n' && c_cols < MAX_COLS) {
+		if (*video == ' ') {
+			video += 2;
+			i++;
+			while (*video == ' ') {
+				i++;
+				video += 2;
+				if (i >= MAX_COLS)
+					return ;
+			}
+		}
+		else {
+			video += 2;	
+			i++;
+			c_cols = i;
+		}
+	}
+}
+
 void	backspace(u8 color) {
 	if (c_cols > 0)
 		c_cols--;
+	else if (c_cols == 0 && c_rows > 0)
+		find_end_c_cols();
 	move_cursor((c_rows * MAX_COLS + c_cols));
 
-	volatile u8 *videop = (volatile u8 *)VIDEO_ADDRESS + (c_rows * MAX_COLS + c_cols) * 2;
-	*videop++ = ' ';
-	*videop = color;
+	volatile u8 *video = (volatile u8 *)VIDEO_ADDRESS + (c_rows * MAX_COLS + c_cols) * 2;
+	*video++ = ' ';
+	*video = color;
 }

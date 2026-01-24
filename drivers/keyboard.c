@@ -23,7 +23,7 @@ void	keyboard_handler(void) {
 		//print_hex((u32)scancode);
 		//print_char(scancode_to_ascii[2], (BLACK << 4) + LIGHT_BLUE);
 		if (getascii(scancode))
-			print_char(scancode_to_ascii[scancode], (BLACK << 4) + LIGHT_GREEN);
+			print_char(scancode_to_ascii[scancode], (BLACK << 4) + LIGHT_PURPLE);
     	}
 	//print_char(scancode, (BLACK << 4) + PURPLE);
 	//print_int((u32)scancode);	
