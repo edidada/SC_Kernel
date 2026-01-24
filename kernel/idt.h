@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "pic.h"
+#include "../drivers/keyboard.h"
 
 #define IDT_CPU_EXCEPTIONS 36
 
@@ -33,7 +34,6 @@ void	idt_set_descriptor(u8 vector, void* isr, u8 flags);
 void	idt_init(void);
 
 void	timer_handler(void);
-void	keyboard_handler(void);
 
 // idt_set_descriptor() Parameters
 // vector - Interrupt number (0-255) - index into IDT array

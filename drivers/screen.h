@@ -30,12 +30,18 @@
 #define YELLOW		0xe
 #define WHITE		0xf
 
-void	clear_screen(void);
+
+// print functions
 void	print_char(u8 c, u8 color);
 void	print_string(u8 *str, u8 color);
+void	print_int(u32 num);
+void	print_hex(u32 num);
+
+// screen operations functions
+void	clear_screen(void);
 void	scroll_screen(void);
 void	mem_move(u16 *dst, u16 *src, u8 len);
-void	print_int(u32 num);
+void	backspace(u8 color);
 
 // Screen device I/O ports
 #define REG_SCREEN_CTRL 0x3D4

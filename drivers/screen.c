@@ -4,8 +4,8 @@ static u8	c_rows = 0;
 static u8	c_cols = 0;
 
 void	clear_screen(void) {
-	u16 *video = (u16 *)VIDEO_ADDRESS;
-	u16 blank = 0x0F20;
+	u16	*video = (u16 *)VIDEO_ADDRESS;
+	u16	blank = 0x0F20;
 
 	c_rows = 0;
 	c_cols = 0;
@@ -16,10 +16,22 @@ void	clear_screen(void) {
 	}
 }
 
+void	print_hex(u32 num) {
+	char	hex_chars[] = "0123456789ABCDEF";
+	char	buffer[11] = "0x00000000";
+
+	for (int i = 9; i >= 2; i--) {
+	buffer[i] = hex_chars[num & 0xF];
+	num >>= 4;
+	}
+
+	print_string(buffer, WHITE_ON_BLACK);
+}
+
 void	print_int(u32 num) {
-	char buffer[12];  // -2147483648 max length
-	int i = 0;
-	int is_negative = 0;
+	char	buffer[12];  // -2147483648 max length
+	int	i = 0;
+	int	is_negative = 0;
 
 	if (num == 0) {
 		print_char('0', WHITE_ON_BLACK);
@@ -30,7 +42,7 @@ void	print_int(u32 num) {
 		is_negative = 1;
 		num = -num;
 	}
-
+	
 	while (num > 0) {
 		buffer[i++] = '0' + (num % 10);
 		num /= 10;
@@ -56,6 +68,10 @@ void	print_char(u8 c, u8 color) {
 			scroll_screen();
 		}
 		move_cursor((c_rows * MAX_COLS + c_cols));
+		return ;
+	}
+	else if (c == '\b') {
+		backspace(color);
 		return ;
 	}
 	*video++ = c;
@@ -95,4 +111,14 @@ void	mem_move(u16 *dst, u16 *src, u8 len) {
 		dst[i] = src[i];
 		i++;
 	}	
+}
+
+void	backspace(u8 color) {
+	if (c_cols > 0)
+		c_cols--;
+	move_cursor((c_rows * MAX_COLS + c_cols));
+
+	volatile u8 *videop = (volatile u8 *)VIDEO_ADDRESS + (c_rows * MAX_COLS + c_cols) * 2;
+	*videop++ = ' ';
+	*videop = color;
 }

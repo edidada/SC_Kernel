@@ -2,18 +2,8 @@
 #include "idt.h"
 
 void	timer_handler(void) {
-	print_string("TICK", (BLACK << 4) + CYAN);
+	// print_string("TICK", (BLACK << 4) + CYAN);
 	PIC_sendEOI(0); // IRQ0 ackowleging interrupt compeletion for PIC. So PIC can send next interrupt.
-	return ;
-}
-
-void	keyboard_handler(void){
-	u8 scancode = inb(0x60);
-	//if (!(scancode & 0x80)) {  // Bit 7 clear = key press
-        //	print_string("KEY PRESSED!", (BLACK << 4) + PURPLE);
-    	//}
-	print_string("KEYBOARD HANDLING HERE!!", (BLACK << 4) + PURPLE);
-	PIC_sendEOI(1);
 	return ;
 }
 
@@ -23,7 +13,7 @@ extern void* isr_stub_table[];
 
 // general exception handler
 void	interrupt_handler(u32 irq_num) {
-	print_int(irq_num);
+	// print_int(irq_num);
 	if (irq_num == 32) {
 		// print_string("Inside 32!!", (BLACK << 4) + YELLOW);
 		timer_handler();
