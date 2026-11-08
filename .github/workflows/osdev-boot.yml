@@ -1,0 +1,126 @@
+name: x86 build & boot (nasm + gcc -m32 + QEMU)
+
+# What this workflow does, end to end:
+#
+#   1. installs the toolchain the project's own Makefile assumes it has on a
+#      Linux box: nasm (boot sector + kernel_entry), gcc with -m32 support
+#      (gcc-multilib), GNU ld, and QEMU;
+#   2. `make all`, which produces boot/boot_sector.bin, kernel.bin and the
+#      concatenated os-image;
+#   3. pads os-image into a real 1.44 MiB floppy, because bochsrc boots it as
+#      `floppaya: 1_44=os-image, boot: a` and the boot sector reads 15 sectors
+#      through INT 0x13 with CHS cylinder 0 / head 0;
+#   4. starts `qemu-system-i386` headless and asks the *machine* -- over QMP --
+#      for the VGA text framebuffer (0xB8000) and EIP. Reading the screen is
+#      the only evidence that survives a compiler that merely exited 0.
+#
+# The pass criteria look odd at first: no string is expected on screen.
+# kernel/kernel.c has every print commented out upstream, so a blank screen is
+# the correct result -- and "nothing ran" is also blank. drivers/screen.c's
+# clear_screen() writes 0x0F20 into all 2000 cells, so attribute 0x0F in ~2000
+# cells is what distinguishes the two, and EIP parked just after `call main`
+# says main() returned. See edidada-ci/run_in_qemu.sh for the reasoning.
+#
+# Note: `ld: warning: cannot find entry symbol _start` from the kernel.bin link
+# step is expected and harmless -- the link is `-Ttext 0x1000 ... --oformat
+# binary`, the entry is whatever sits at 0x1000 (kernel_entry.asm), and there
+# is no ELF header to carry an entry symbol at all.
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: osdev-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  boot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install toolchain (nasm, gcc-multilib, QEMU)
+        run: |
+          set -o pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            nasm gcc-multilib make binutils file \
+            qemu-system-x86 qemu-utils
+          echo '--- identities'
+          nasm -v
+          gcc --version | head -1
+          ld --version | head -1
+          qemu-system-i386 --version | head -1
+          echo '--- 32-bit C support'
+          printf 'int main(void){return 0;}\n' > /tmp/t.c
+          gcc -m32 -ffreestanding -c /tmp/t.c -o /tmp/t.o && echo '-m32 ok'
+
+      - name: Build (make all)
+        run: make all 2>&1 | tee build.log
+
+      - name: Inventory build products
+        run: |
+          ls -l boot/boot_sector.bin kernel.bin os-image
+          echo "os-image is $(stat -c%s os-image) bytes"
+          echo '--- first bytes of the boot sector (0x55 0xAA must be at 510/511)'
+          od -An -tx1 -j510 -N2 boot/boot_sector.bin
+          echo '--- kernel.bin is a --oformat binary: no ELF, no symbol table, so'
+          echo '    disassemble it raw at the address the linker put it (-Ttext 0x1000).'
+          echo '    0x1000 is `call <kernel_entry -> main>`, 0x1005 is the `jmp $`'
+          echo '    after it -- the EIP the run step expects to find is 0x1005.'
+          objdump -D -b binary -m i386 --adjust-vma=0x1000 --stop-address=0x1010 kernel.bin | head -14
+
+      - name: Boot in QEMU and verify the screen
+        run: bash edidada-ci/run_in_qemu.sh
+
+      - name: Summarise what was measured
+        if: always()
+        run: |
+          python3 - <<'PY' | tee -a "$GITHUB_STEP_SUMMARY"
+          import json, os
+          p = "qemu-report.json"
+          print("## Boot verification")
+          if not os.path.exists(p):
+              print("no qemu-report.json -- the run step did not get that far")
+              raise SystemExit(0)
+          r = json.load(open(p))
+          print("| what | value |")
+          print("|---|---|")
+          print("| guest status | `%s` |" % r.get("guest"))
+          print("| framebuffer captured | %s bytes via `%s` |" %
+                (r.get("vga_bytes", 0), r.get("vga_source")))
+          print("| framebuffer sources | pmemsave file %d bytes, x/4000xb %d bytes, identical=%s |" %
+                (r.get("vga_file_bytes", 0), r.get("x_bytes_len", 0),
+                 r.get("vga_sources_agree")))
+          print("| attribute 0x0F cells | %s (clear_screen wrote 0x0F20 to 2000) |" %
+                r.get("attr_cells"))
+          print("| attribute histogram | %s |" % r.get("attr_hist"))
+          print("| EIP | `%s` |" % r.get("registers", "").split("EIP=")[-1][:8])
+          print("| EIP samples | %s (advancing=%s) |" %
+                (r.get("eip_delta"), r.get("advancing")))
+          print("| non-blank cells | %s |" % r.get("nonblank_cells"))
+          print("| missing evidence | %s |" % (r.get("missing") or "none"))
+          print()
+          print("Screen text decoded from 0xB8000 (empty is expected: kernel.c's")
+          print("prints are commented out upstream; the attribute bytes are the proof):")
+          for line in r.get("screen", [])[:12] or ["(no printable cells)"]:
+              print("    " + line)
+          PY
+
+      - name: Upload the image and the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: osdev-boot-${{ github.run_number }}
+          path: |
+            os-image
+            build.log
+            qemu-report.json
+          if-no-files-found: warn
+          retention-days: 14
