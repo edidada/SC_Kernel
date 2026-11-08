@@ -62,7 +62,16 @@ jobs:
           gcc -m32 -ffreestanding -c /tmp/t.c -o /tmp/t.o && echo '-m32 ok'
 
       - name: Build (make all)
-        run: make all 2>&1 | tee build.log
+        run: |
+          # set -o pipefail matters more than it looks: `make all | tee
+          # build.log` reports the exit status of tee, so without it a failing
+          # compile still turns the step green. The sibling bootloader fork was
+          # caught by exactly this on its first run.
+          set -o pipefail
+          echo '--- artefacts tracked in git (must not decide the build):'
+          git ls-files '*.bin' '*.o' '*.elf' '*.iso' 'os-image' | sed 's/^/  /'
+          make clean || true
+          make all 2>&1 | tee build.log
 
       - name: Inventory build products
         run: |
