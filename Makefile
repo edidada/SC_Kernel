@@ -45,8 +45,15 @@ myos.iso: kernel.elf
 
 # Generic rule for compiling C code to an object file
 # For simplicity , we C files depend on all header files.
+#
+# -include stdbool.h : kernel/idt.c:10 and drivers/keyboard.c:11 declare
+# `bool` parameters, but no header in the tree defines the type or includes
+# <stdbool.h>, so a freestanding build fails with "unknown type name 'bool'"
+# (measured with gcc 13.3.0 -m32 -ffreestanding). Injecting the standard
+# header keeps every source file untouched.
 %.o : %.c ${HEADERS}
-	gcc -m32 -fno-pic -fno-pie -ffreestanding -c $< -o $@
+	#gcc -m32 -fno-pic -fno-pie -ffreestanding -c $< -o $@
+	gcc -m32 -fno-pic -fno-pie -ffreestanding -include stdbool.h -c $< -o $@
 
 # Assemble the kernel_entry.
 %.o : %.asm
